@@ -1,0 +1,32 @@
+version: 1.0
+
+# This is Orquesta workflow using YAQL
+description: Basic workflow to construct parameters to for jenkins.build_job action in a JSON format
+
+input:
+  - job
+  - buildenv
+  - branch
+  - params
+
+tasks:
+  prepare_build_job:
+    action: poshmark_devops.prepare_build_job
+    input:
+      job: <% ctx().job %>
+      buildenv: <% ctx().buildenv %>
+      branch: <% ctx().branch %>
+      parameters: <% ctx().params %>
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - project:  <% result().result[0] %>
+          - parameters: <% result().result[1] %>
+        do:
+          - run_build_job
+
+  run_build_job:
+    action: jenkins.build_job
+    input:
+      project: <% ctx().project %>
+      parameters: <% ctx().parameters %>

@@ -1,0 +1,9 @@
+---
+# tasks file for posh.st2_deploy
+- name: Deploy poshmark_devops pack
+  import_tasks: deploy_poshmark_devops.yml
+  tags: deploy_poshmark_devops, deploy
+
+- name: Deploy poshmark developed chatops node_modules
+  import_tasks: deploy_hubot_modules.yml
+  tags: deploy_hubot_modules, deploy

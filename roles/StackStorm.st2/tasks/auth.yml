@@ -1,0 +1,94 @@
+- name: Include OS-specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_facts.os_family | lower }}_{{ ansible_facts.distribution_major_version }}.yml"
+    - "{{ ansible_facts.os_family | lower }}.yml"
+  ignore_errors: true
+
+- name: auth | Install auth pre-reqs (Debian)
+  become: yes
+  apt:
+    name:
+      - apache2-utils
+      - "{{ passlib }}"
+    state: present
+  register: _task
+  retries: 5
+  delay: 3
+  until: _task is succeeded
+  when: ansible_facts.os_family == 'Debian'
+
+- name: auth | Install auth pre-reqs (RedHat)
+  become: yes
+  yum:
+    name:
+      - httpd-tools
+      - "{{ passlib }}"
+    state: present
+  register: _task
+  retries: 5
+  delay: 3
+  until: _task is succeeded
+  when: ansible_facts.os_family == 'RedHat'
+
+# Use pip to install passlib as no python38-passlib yum package available. Still need python3-passlib
+# installed as well though from above task
+- name: auth | Install pip pre-reqs (RedHat)
+  become: yes
+  pip:
+     name: passlib
+     executable: /usr/bin/pip3
+     state: present
+  when: ansible_facts.os_family == 'RedHat' and ansible_facts.distribution_major_version!='7'
+
+- name: auth | Create htpasswd file
+  become: true
+  htpasswd:
+    path: /etc/st2/htpasswd
+    name: "{{ st2_auth_username }}"
+    password: "{{ st2_auth_password }}"
+  notify:
+    - restart st2api
+    - restart st2stream
+
+- name: auth | Enable authentication
+  become: yes
+  ini_file:
+    dest: /etc/st2/st2.conf
+    section: auth
+    option: enable
+    value: True
+    backup: yes
+  notify:
+    - restart st2api
+    - restart st2stream
+
+- name: auth | Create root's CLI configuration directory
+  become: yes
+  file:
+    path: /root/.st2
+    state: directory
+  when: st2_save_credentials | bool
+
+- name: auth | Save credentials in CLI configuration file
+  become: yes
+  blockinfile:
+    dest: /root/.st2/config
+    create: yes
+    mode: 0600
+    owner: root
+    group: root
+    block: |
+      [credentials]
+      username = {{ st2_auth_username }}
+      password = {{ st2_auth_password }}
+  when: st2_save_credentials | bool
+
+- name: auth | Setup LDAP
+  include_tasks: auth-ldap.yml
+  when: st2_ldap_enable
+  tags: st2, auth, ldap
+
+- name: auth | Setup RBAC
+  include_tasks: auth-rbac.yml
+  tags: st2, auth, rbac

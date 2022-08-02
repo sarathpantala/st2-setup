@@ -1,0 +1,36 @@
+---
+name: "restart_ec2_instance"
+pack: "poshmark_devops"
+description: "Rule that run workflow restart_ec2_instance to process request for restart of EC2 instance."
+enabled: true
+runner_type: "orquesta"
+entry_point: "workflows/restart_ec2_instance.yaml"
+parameters:
+  aws_region:
+    type: "string"
+    description: "Region of EC2 instance."
+    required: true
+  host:
+    type: "string"
+    description: "Hostname of EC2 instance (Tag.Name)."
+    required: true
+  event_title:
+    type: "string"
+    description: "event_title name of alert."
+    required: false
+  event_msg:
+    type: "string"
+    description: "event message incase of request processing failure."
+    required: false
+  slack_channel_critical:
+    type: "string"
+    description: "slack channel for critical notifications: #prod-critical-alerts"
+    required: false
+    default: "{{config_context.ops_critical_alert_channel}}"
+  slack_channel_normal:
+    type: "string"
+    description: "slack channel for normal notifications: #production-alerts"
+    required: false
+    default: "{{config_context.ops_normal_alert_channel}}"
+
+  

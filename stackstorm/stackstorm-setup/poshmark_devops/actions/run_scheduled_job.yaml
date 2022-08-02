@@ -1,0 +1,10 @@
+name: run_scheduled_job
+runner_type: mistral-v2
+description: "Run job scheduled by another stackstorm workflow"
+enabled: true
+entry_point: "workflows/run_scheduled_job.yaml"
+parameters:
+  ds_key:
+    type: string
+    description: "Datastore Key"
+    required: true

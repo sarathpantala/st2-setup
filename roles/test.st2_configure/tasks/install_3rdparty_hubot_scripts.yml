@@ -1,0 +1,31 @@
+---
+- name: install_3rdparty_hubot_scripts | Install 3rd party hubot scripts
+  become: yes
+  shell: npm install {{ item }} --save
+  args:
+    chdir: "{{ chatops_dir }}"
+  loop: 
+    - hubot-better-help
+  # tag: install_3rdparty_hubot_scripts
+
+- name: install_3rdparty_hubot_scripts | Replace hubot-help with hubot-better-help to external-scripts.json
+  become: yes
+  lineinfile:
+    path: "{{ chatops_dir }}/external-scripts.json"
+    line: '  "hubot-better-help"'
+    regexp: '"hubot-help"'
+    backrefs: yes
+
+- name: install_3rdparty_hubot_scripts | Produce help all output with help - DEVOPS-2166
+  become: yes
+  copy:
+    src: "stackstorm-setup/hubot-better-help_index.js"
+    dest: "{{ chatops_dir }}/node_modules/hubot-better-help/scripts/better-help/index.js"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+    
+- name: Restart st2chatops
+  become: yes
+  command: st2ctl restart-component st2chatops

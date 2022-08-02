@@ -1,0 +1,12 @@
+---
+name: "process_jenkins_notifications"
+pack: "poshmark_devops"
+description: "Rule that run workflow process_jenkins_notifications to process notifications from jenkins."
+enabled: true
+runner_type: "orquesta"
+entry_point: "workflows/process_jenkins_notifications.yaml"
+parameters:
+  responsebody:
+    type: "object"
+    description: "Response body of jenkins notification."
+    required: true

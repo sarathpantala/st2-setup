@@ -1,0 +1,13 @@
+---
+name: "parse_datadog_event"
+pack: "poshmark_devops"
+description: "Rule that will parse datadog notification using python script which returns 
+a dict with message, color, result_url(jenkins) and key"
+enabled: true
+runner_type: "python-script"
+entry_point: "parse_datadog_event.py"
+parameters:
+  responsebody:
+    type: "object"
+    description: "Response body of datadog event."
+    required: true

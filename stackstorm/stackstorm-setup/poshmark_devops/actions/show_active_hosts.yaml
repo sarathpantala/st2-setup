@@ -1,0 +1,20 @@
+name: show_active_hosts
+runner_type: orquesta
+description: Shows active hosts for the given environment and type.
+enabled: true
+entry_point: workflows/show_active_hosts.yaml
+pack: poshmark_devops
+parameters:
+    env:
+        type: string
+        description: "Environment of Host"
+        required: true
+    type:
+        type: string
+        default: "*"
+        description: "Type of Host"
+        required: false
+    user:
+        type: string
+        description: "User Name"
+        required: true

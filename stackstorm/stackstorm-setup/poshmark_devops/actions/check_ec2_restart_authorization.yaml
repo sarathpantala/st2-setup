@@ -1,0 +1,12 @@
+---
+name: "check_ec2_restart_authorization"
+pack: "poshmark_devops"
+description: "Action that will check if a given EC2 instance name can be restarted or not"
+enabled: true
+runner_type: "python-script"
+entry_point: "check_ec2_restart_authorization.py"
+parameters:
+  host:
+    type: "string"
+    description: "EC2 instance name (tag.Name)."
+    required: true

@@ -1,0 +1,7 @@
+---
+ref: poshmark_devops
+name: poshmark_devops
+description: Custom workflow and actions for Poshmark Devops to integrate with Stackstorm Packs
+version: 0.0.1
+author: Edward Lam
+email: edward@poshmark.com

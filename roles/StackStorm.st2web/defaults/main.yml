@@ -1,0 +1,17 @@
+---
+# defaults file for st2web
+# StackStorm st2web version to install. `present` to install available package, `latest` to get automatic updates or pin it to numeric version like `2.2.0`.
+# On Debian need to specify revision of package like `2.2.0-1`.
+st2web_version: latest
+
+# String with custom SSL certificate. If not provided, self-signed certificate will be generated.
+st2web_ssl_certificate: null
+
+# String with custom SSL certificate private key. If not provided, self-signed certificate will be generated.
+st2web_ssl_certificate_key: null
+
+# String with a custom nginx configuration file to replace st2.conf. If not provided, the default st2.conf will be used.
+st2web_nginx_config: null
+
+# StackStorm st2web package name (legacy since `st2flow` doesn't exist anymore).
+st2web_package_name: st2web

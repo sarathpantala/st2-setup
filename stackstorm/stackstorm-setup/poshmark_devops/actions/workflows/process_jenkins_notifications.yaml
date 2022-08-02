@@ -1,0 +1,69 @@
+version: 1.0
+
+# This is Orquesta workflow using YAQL
+description: Workflow that process jenkins notifications
+
+input:
+  - responsebody
+
+tasks:
+  # poshmark_devops.parse_jenkins_notification run python-script parse_jenkins_notification.py and retuns
+  # slack_channel, message (for slack), result_url, user_key (to get slack username if the deployment 
+  # was triggered through jarvis from slack) and color (color-coding messages).
+  parse_jenkins_notification:
+    action: poshmark_devops.parse_jenkins_notification
+    input:
+      responsebody: <% ctx().responsebody %>
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - slack_channel: <% result().result.slack_channel %>
+          - message: <% result().result.message %>
+          - result_url: <% result().result.result_url %>
+          - user_key: <% result().result.user_key %>
+          - color: <% result().result.color %>
+        do:
+          # Execute is_key_empty if this task is success.
+          - is_user_key_empty
+  
+  # checks if user key name is empty or not. If not empty then validate_user_key. 
+  # If empty -> message slack
+  is_user_key_empty:
+    next:
+      - when: <% ctx().user_key != '' %>
+        do:
+          - validate_user_key
+      - when: <% ctx().user_key = '' %>
+        do:
+          - message_slack
+  
+  # Check if user_key is in kv store. If yes then get slack username else message_slack
+  validate_user_key:
+    action: st2.kv.grep query=<% ctx().user_key %>
+    next:
+      - when: <% succeeded() and result().result %>
+        do:
+          - get_user
+      - when: <% succeeded() and not result().result %>
+        do:
+          - message_slack
+  
+  # Get value of user_key and store the value in user. If success then run message_slack
+  get_user:
+    action: st2.kv.get key=<% ctx().user_key %>
+    next:
+      - when: <% succeeded() %>
+        publish: 
+          - user: <% result().result %>
+        do:
+          - message_slack
+  
+  # Send message to slack channel using color coding.
+  message_slack:
+    action: chatops.post_message
+    input:
+      channel: <% ctx().slack_channel %>
+      message: "<% ctx().message %>\nURL: <% ctx().result_url %>"
+      # user: "{{ ctx().user | default('here') }}"
+      extra:
+        color: <% ctx().color %>

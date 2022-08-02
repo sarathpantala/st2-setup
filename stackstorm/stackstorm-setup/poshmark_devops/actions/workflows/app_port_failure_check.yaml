@@ -1,0 +1,61 @@
+version: '2.0'
+
+poshmark_devops.app_port_failure_check:
+    description: Log app port failure and wait for it to auto resolve unless there are more than 10 within an hour then raise pd to person on duty
+    input:
+        - msg
+        - host
+    tasks:
+        does_count_exist:
+            acount: st2.kv.grep
+            input:
+                query: "app_port_fail_count"
+            on-success:
+                check_count_of_failures: "{{ task('does_count_exist').result.result }}"
+                log_count_of_port_check_failure: "{{ not task('does_count_exist').result.result }}"
+
+        check_count_of_failures:
+            action: st2.kv.get
+            input:
+                key: "app_port_fail_count"
+            publish:
+                count: "{{ task('check_count_of_failures').result.result[0] }}"
+            on-success:
+                - page_redis: "{{ 'redis' in _.host }}"
+                - set_page: "{{ _.count >= 10 }}"
+                - incremnt_count_of_port_check_filaure: "{{ _.count < 10 }}"
+
+        log_count_of_port_check_failure:
+            action: st2.kv.set
+            input:
+                value: "1"
+                key: "app_port_fail_count"
+                ttl: 3600
+            on-success:
+                msg_slack
+
+        increment_count_of_port_check_failure:
+            action: st2.kv.set
+            input:
+                value: "{{ _.count + 1 }}"
+                key: "app_port_fail_count"
+            on-success:
+                msg_slack
+
+        msg_slack:
+            action: chatops.post_message
+            input:
+                channel: "poshbot_channel"
+                message: "Received App Port check failure for {{ _.host }}"
+                extra:
+                    color: "warning"
+
+        set_page:
+            action: pagerduty.launch_incident
+            input:
+                description: "More then 10 app port checks have failed in last 60 mins."
+
+        page_redis:
+            action: pagerduty.launch_incident
+            input:
+                description: "Redis ec2 instance check has failed."

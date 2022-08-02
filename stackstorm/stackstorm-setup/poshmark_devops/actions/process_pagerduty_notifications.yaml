@@ -1,0 +1,11 @@
+name: process_pagerduty_notifications
+runner_type: python-script
+description: "Clean up result of the Last 12 Hours of Incident Notifications from Pagerduty."
+enabled: true
+entry_point: "process_pagerduty_notifications.py"
+pack: poshmark_devops
+parameters:
+  team:
+    type: string
+    description: "Team whose Notifications are to be Displayed"
+    required: true

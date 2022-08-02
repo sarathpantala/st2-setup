@@ -1,0 +1,15 @@
+name: deploy_node_web
+runner_type: orquesta
+description: Basic workflow to run deploy node for web.
+enabled: true
+entry_point: workflows/deploy_node_web.yaml
+pack: poshmark_devops
+parameters:
+    job:
+        type: string
+        description: "job to run"
+        required: true
+    pm_style_branch:
+        type: string
+        description: "pm style branch"
+        required: true

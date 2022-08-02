@@ -1,0 +1,83 @@
+version: '2.0'
+
+poshmark_devops.check_datadog_agent:
+    description: Restart prod for app and qw to resolve mongodb connection spike.
+    input:
+        - color
+        - host
+    tasks:
+        check_data_dog_status:
+            action: core.remote
+            input:
+                cmd: "sudo /etc/init.d/datadog-agent status | grep 'active (running)'"
+                hosts: "{{ _.host }}"
+            on-error:
+                get_last_attempt
+            on-success:
+                check_integrations
+
+        get_last_attempt:
+            action: st2.kv.get
+            input:
+                key: "dd_restart"
+            on-error:
+                log_attempt
+            on-success:
+                notify_failed_restart
+
+        log_attempt:
+            action: st2.kv.set
+            input:
+                key: "{{ _.host }}_dd_restart"
+                value: "true"
+            on-success:
+                restart_dd_agent
+
+        restart_dd_agent:
+            action: core.remote
+            input:
+                cmd: "sudo /etc/init.d/datadog-agent start"
+                hosts: "{{ _.host }}"
+            on-complete:
+                recheck_agent_status
+
+        recheck_agent_status:
+            action: core.remote
+            input:
+                cmd: "sudo /etc/init.d/datadog-agent status | grep 'active (running)'"
+                hosts: "{{ _.host }}"
+            on-error:
+                get_last_attempt
+            on-success:
+                delete_last_attempt
+
+        delete_last_attempt:
+            action: st2.kv.delete
+            input:
+                key: "{{ _.host }}_dd_restart"
+            on-success:
+                notify_devops
+
+        notify_devops:
+            action: chatops.post_message
+            input:
+                channel: "poshbot_channel"
+                message: "Started datadog agent on {{ _.host }}"
+                extra:
+                    color: "good"
+
+        notify_failed_restart:
+            action: chatops.post_message
+            input:
+                channel: "poshbot_channel"
+                message: "Unable to restart datadog agent on {{ _.host }}"
+                extra:
+                    color: "danger"
+
+        check_integrations:
+            action: chatops.post_message
+            input:
+                channel: "poshbot_channel"
+                message: "Datadog agent is running on {{ _.host }} - check integrations"
+                extra:
+                    color: "danger"

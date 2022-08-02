@@ -1,0 +1,15 @@
+---
+  name: "jenkins_job_notification"
+  pack: "poshmark_devops"
+  description: "Listen for webhook from Jenkins about job completion (success or failure)"
+  enabled: true
+
+  trigger:
+    type: "core.st2.webhook"
+    parameters:
+      url: "jenkins"
+
+  action:
+    ref: "poshmark_devops.jenkins_monitor"
+    parameters:
+      responsebody: "{{ trigger.body }}"

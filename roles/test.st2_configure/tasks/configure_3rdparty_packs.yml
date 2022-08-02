@@ -1,0 +1,13 @@
+---
+- name: Configure_3rd_party_packs | Creating 3rd party pack config files
+  become: yes
+  template:
+    src: "{{ item }}.yaml.j2"
+    dest: "{{ stackstorm_configs }}/{{ item }}.yaml"
+    owner: root
+    group: st2
+    # securing this file due to the presence of api key/passwords
+    mode: 0640
+  loop: "{{ st2_3rdparty_packs }}"
+  notify: 
+    - reload register-configs

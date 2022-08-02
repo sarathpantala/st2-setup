@@ -1,0 +1,11 @@
+name: jenkins_update_host
+runner_type: orquesta
+description: Basic workflow to run the DevOps jenkins job to update the hosts.
+enabled: true
+entry_point: workflows/jenkins_update_host.yaml
+pack: poshmark_devops
+parameters:
+    hostname:
+        type: string
+        description: "Hostname for Jenkins to update"
+        required: true

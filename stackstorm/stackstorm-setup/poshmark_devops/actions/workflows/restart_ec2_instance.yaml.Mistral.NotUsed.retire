@@ -1,0 +1,54 @@
+version: '2.0'
+
+poshmark_devops.fix_mongo_connection_spike:
+  description: Restart prod for app and qw to resolve mongodb connection spike.
+  input:
+    - color
+    - event
+    - monitor
+    - alert_type
+    - msg
+    - cluster
+  tasks:
+    check_previous_run:
+      action: st2.kv.get
+      input:
+        key: 'fixedmongo'
+      on-error:
+        msg_slack
+
+    skip_work:
+      action: pagerduty.launch_incident
+      input:
+        description: "Received 2+ MongoDB Connection Spikes in the past 60 mins."
+
+    msg_slack:
+      action: chatops.post_message
+      input:
+        channel: "poshbot_channel"
+        message: "Restarting APP & Queue Workers to address {{ _.msg }}"
+        extra:
+          color: "{{ _.color }}"
+      on-success:
+        run_jenkins_restart
+
+    run_jenkins_restart:
+      action: chatops.post_message
+      input:
+        channel: "poshbot_channel"
+        message: "Calling poshmark_devops.run_jenkins_job with job='restart' buildenv='{{ _.cluster }}'"
+        extra:
+          color: "{{ _.color }}"
+      on-success:
+        log_restart
+#      action: poshmark_devops.run_jenkins_job
+#      input:
+#        job: "restart"
+#        buildenv: "{{ _.cluster }}" 
+
+    log_restart:
+      action: st2.kv.set
+      input:
+        value: 'true'
+        key: 'fixedmongo'
+        ttl: 3600

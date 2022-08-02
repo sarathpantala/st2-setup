@@ -1,0 +1,20 @@
+name: prepare_build_job
+runner_type: python-script
+description: "Kick off Jenkins Build Jobs"
+enabled: true
+entry_point: "prepare_build_job.py"
+parameters:
+    job:
+        type: string
+        description: "Project to build in Jenkins"
+        required: true
+    buildenv:
+        type: string
+        description: "Env to run job on"
+        required: false
+    branch:
+        type: string
+        description: "Branch to deploy"
+    parameters:
+        type: string
+        description: "Optional parameters for build in comma(,) seperated format"

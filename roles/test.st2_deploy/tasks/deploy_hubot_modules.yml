@@ -1,0 +1,23 @@
+---
+- name: deploy_hubot_modules | Copy hubot-poshmark to {{ stackstorm_root }}/chatops/node_modules/
+  become: yes
+  copy:
+    src: stackstorm-setup/hubot-poshmark
+    dest: '{{ stackstorm_root }}/chatops/node_modules/'
+    owner: root
+    group: root
+
+- name: deploy_hubot_modules | Add hubot-poshmark to external-scripts.json
+  become: yes
+  lineinfile:
+    path: '{{ stackstorm_root }}/chatops/external-scripts.json'
+    line: '  "{{ item }}",'
+    insertafter: '^\['
+  loop:
+    - hubot-poshmark
+
+- name: restart st2chatops
+  become: yes
+  service:
+    name: st2chatops
+    state: restarted

@@ -1,0 +1,24 @@
+# Changes to this file is managed by ANSIBLE. Please don't make manual changes.
+---
+# Used for post message action
+post_message_action:
+  webhook_url: "{{ slack.webhook_url }}"
+  channel: "{{ slack.channel}}"
+  username: "{{ slack.username}}"
+  icon_emoji: "{{ slack.icon_emoji }}"
+
+# Used for Slack sensor
+sensor:
+  token: ""
+  strip_formatting: false
+
+action_token: ""
+admin:
+  admin_token: ""
+  organization: ""
+  set_active: true
+  attempts: 1
+  auto_join_channels: 
+  {% for channel in slack.auto_join_channels %}
+    - {{ channel }}
+  {% endfor %}

@@ -1,0 +1,10 @@
+name: increment_high_cpu_count
+runner_type: python-script
+description: "Increment count of high cpu alerts"
+enabled: true
+entry_point: "increment_high_cpu_count.py"
+parameters:
+    count:
+        type: string
+        description: "Project to build in Jenkins"
+        required: true

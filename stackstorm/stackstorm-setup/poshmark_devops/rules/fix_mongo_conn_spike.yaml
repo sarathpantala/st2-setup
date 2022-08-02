@@ -1,0 +1,18 @@
+---
+name: "fix_mongo_conn_spikes"
+pack: "poshmark_devops"
+description: "Listen for trigger from Datadog alert processing"
+enabled: true
+
+trigger:
+  type: "core.st2.CronTimer"
+  parameters:
+      timezone: "US/Pacific"
+      hour: 13,17,21
+      minute: 05
+      second: 0
+
+action:
+  ref: "poshmark_devops.run_scheduled_job"
+  parameters:
+    ds_key: "schedulerestart"

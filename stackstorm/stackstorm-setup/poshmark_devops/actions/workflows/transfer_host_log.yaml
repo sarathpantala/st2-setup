@@ -1,0 +1,15 @@
+version: '1.0' #Version of the Job
+
+# This is Orquestra workflow using YAQL
+description: Basic workflow to run the DevOps jenkins job to update the hosts.
+
+input:
+  - host_name
+  - log_name
+
+tasks:
+  run_update_host:
+    action: jenkins.build_job
+    input:
+      project: 'transfer-host-log'
+      parameters: { "target_host": <% ctx().host_name %>, "log_file": <% ctx().log_name %>}

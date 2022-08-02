@@ -1,0 +1,25 @@
+version: '1.0' #Version of the Job
+
+# This is Orquestra workflow using YAQL
+description: Basic workflow to run the DevOps jenkins job to update the hosts.
+
+input:
+  - hostname
+
+tasks:
+  transform_hostname:
+    action: poshmark_devops.transform_hostname
+    input:
+      hostname: <% ctx().hostname %>
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - parameters: <% result().result %>
+        do:
+          - run_update_host
+
+  run_update_host:
+    action: jenkins.build_job
+    input:
+      project: 'update-hosts-ansible'
+      parameters: <% ctx().parameters %>

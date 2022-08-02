@@ -1,0 +1,58 @@
+---
+  pagerduty_api_key:
+    description: "Pagerduty API key"
+    type: "string"
+    secret: true
+    required: true
+  pd_devops_primary:
+    description: "DEVOPS Pagerduty oncall primary"
+    type: "string"
+    required: true
+  pd_platform_primary:
+    description: "Platform team Pagerduty oncall primary"
+    type: "string"
+    required: false
+  pd_web_primary:
+    description: "Web team Pagerduty oncall primary"
+    type: "string"
+    required: false
+  # alert_title_job_map:
+  #   description: "maps datadog alert title with a stackstorm workflow job name and a linux service name if there is one or needed"
+  #   type: "object"
+  #   requited: true
+  ops_critical_alert_channel:
+    type: "string"
+    description: "Ops slack channel for critical notifications: #prod-critical-alerts"
+    required: true
+  ops_normal_alert_channel:
+    type: "string"
+    description: "Ops slack channel for normal notifications: #production-alerts"
+    required: true
+  appci_jenkins_config:
+    type: "object"
+    description: "appci jenkins config with url, username, password (user api token)"
+    required: true
+    additionalProperties: true
+    properties:
+      url:
+        type: "string"
+        required: true
+      username:
+        type: "string"
+        required: true
+      password:
+        type: "string"
+        required: true
+  friday_url:
+    description: "Friday Jenkins URL"
+    type: "string"
+    required: true
+  friday_user:
+    description: "Friday Jenkins username"
+    type: "string"
+    required: true
+  friday_password:
+    description: "Friday Jenkins password (user API token)"
+    type: "string"
+    required: true
+    secret: true

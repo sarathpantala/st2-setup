@@ -1,0 +1,13 @@
+---
+name: "parse_jenkins_notification"
+pack: "poshmark_devops"
+description: "Rule that will parse jenkins notification using python script which returns 
+a dict with message, color, result_url(jenkins) and key"
+enabled: true
+runner_type: "python-script"
+entry_point: "parse_jenkins_notification.py"
+parameters:
+  responsebody:
+    type: "object"
+    description: "Response body of jenkins notification."
+    required: true

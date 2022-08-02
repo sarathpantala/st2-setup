@@ -1,0 +1,15 @@
+---
+name: "process_datadog_event"
+pack: "poshmark_devops"
+description: "Rule to process events from datadog"
+enabled: true
+
+trigger:
+  type: "core.st2.webhook"
+  parameters:
+    url: "datadogEvents"
+
+action:
+  ref: "poshmark_devops.process_datadog_event"
+  parameters:
+    responsebody: "{{ trigger.body }}"

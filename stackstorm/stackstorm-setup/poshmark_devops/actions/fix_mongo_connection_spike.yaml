@@ -1,0 +1,19 @@
+name: fix_mongo_connection_spike
+runner_type: mistral-v2
+description: "Restart app and qw for reset Mongo db connection spike"
+enabled: true
+entry_point: "workflows/fix_mongo_connection_spike.yaml"
+parameters:
+  color:
+    type: string
+    description: "Slack Message color"
+    required: true
+  schedule:
+    type: string
+    description: "Schedule to run later?"
+    required: true
+  env:
+    type: string
+    description: "Environment of the error (prod|qa|stage)"
+    required: true
+

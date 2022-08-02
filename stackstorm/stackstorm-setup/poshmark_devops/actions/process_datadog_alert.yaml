@@ -1,0 +1,10 @@
+name: process_datadog_alert
+runner_type: python-script
+description: "Process Jenkins Notification"
+enabled: true
+entry_point: "process_datadog_alert.py"
+parameters:
+    responsebody:
+        type: object
+        description: "Body of trigger from Jenkins"
+        required: true

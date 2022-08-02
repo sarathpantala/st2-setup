@@ -1,0 +1,15 @@
+---
+name: "process_jenkins_notifications"
+pack: "poshmark_devops"
+description: "Rule to process notifications from jenkins"
+enabled: true
+
+trigger:
+  type: "core.st2.webhook"
+  parameters:
+    url: "jenkins_notify"
+
+action:
+  ref: "poshmark_devops.process_jenkins_notifications"
+  parameters:
+    responsebody: "{{ trigger.body }}"

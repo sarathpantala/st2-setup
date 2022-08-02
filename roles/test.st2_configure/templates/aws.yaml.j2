@@ -1,0 +1,19 @@
+# Changes to this file is managed by ANSIBLE. Please don't make manual changes.
+---
+aws_access_key_id: {{ lookup('aws_ssm', '/st2_aws/aws_access_key_id', region=aws_ssm_region ) | default('could not access aws ssm parameter') }}
+aws_secret_access_key: {{ lookup('aws_ssm', '/st2_aws/aws_secret_access_key', region=aws_ssm_region ) | default('could not access aws ssm parameter') }}
+region: {{ aws.region }}
+st2_user_data: {{ aws.st2_user_data }}
+debug: {{ aws.debug }}
+
+service_notifications_sensor:
+  host: localhost
+  port: 12345
+  path: /my-path
+
+sqs_sensor:
+  input_queues:
+    - queuename
+
+sqs_other:
+  max_number_of_messages: 1

@@ -1,0 +1,44 @@
+---
+# Deleting pack config file. So, that reinstalltion will exit successfully
+# without failing on register pack stage of pack installation.
+- name: deploy_poshmark_devops | Delete packs Config files if exists
+  become: yes
+  file:
+    path: "{{ stackstorm_configs }}/poshmark_devops.yaml"
+    state: absent
+  notify:
+    - remove poshmark_devops_temp_dir
+
+# Note: Don't use "st2 pack install" from a localdir when then pack is in /tmp. For some reason 
+# os.path.isdir(local_pack_directory) (st2common/util/pack_management.py) is returning "False" 
+# when pack dir is in /tmp but its "True" is use the piece of code seperately. 
+- name: deploy_poshmark_devops | Copy poshmark_devops to {{ stackstorm_root }} temporarily 
+  become: yes
+  copy:
+    src: stackstorm-setup/poshmark_devops
+    dest: '{{ stackstorm_root }}/'
+    owner: root
+    group: st2packs
+
+- name: deploy_poshmark_devops | Deploy poshmark_devops pack's config file
+  become: yes
+  template:
+    src: "poshmark_devops.yaml.j2"
+    dest: "{{ stackstorm_configs }}/poshmark_devops.yaml"
+    owner: root
+    group: st2
+    # securing this file due to the presence of api key/passwords
+    mode: 0640
+
+- name: deploy_poshmark_devops | Install poshmark_devops pack
+  become: yes
+  shell: ST2_AUTH_TOKEN=`st2 auth -t -p {{ st2_auth_password }} {{ st2_auth_username }}` st2 pack install --python3 file://{{ stackstorm_root }}/poshmark_devops
+  notify:
+    - remove poshmark_devops_temp_dir
+
+- name: restart st2
+  become: yes
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop: "{{ st2_services }}"

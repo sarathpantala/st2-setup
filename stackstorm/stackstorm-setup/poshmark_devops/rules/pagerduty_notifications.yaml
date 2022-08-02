@@ -1,0 +1,18 @@
+---
+name: "pagerduty_notifications"
+pack: "poshmark_devops"
+description: "Trigger at Every 6AM / 6PM PST to Send Pagerduty Notification."
+enabled: true
+
+trigger:
+  type: "core.st2.CronTimer"
+  parameters:
+      timezone: "US/Pacific"
+      hour: 6,18
+      minute: 0
+      second: 0
+
+action:
+  ref: "poshmark_devops.pagerduty_notifications"
+  parameters:
+    team: "DevOps"

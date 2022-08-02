@@ -1,0 +1,9 @@
+---
+- name: Test stackstorm Deployment
+  hosts: all
+  vars:
+    st2_auth_password: admin
+    hubot_slack_token: xoxb-3831804017712-3810465671652-iZmY1D74iB7Ypmjia12ALudp
+    helper_slack_token: xoxb-3831804017712-3810465671652-iZmY1D74iB7Ypmjia12ALudp
+  roles:
+    - test.st2_deploy

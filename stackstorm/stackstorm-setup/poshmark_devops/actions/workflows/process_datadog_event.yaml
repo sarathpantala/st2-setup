@@ -1,0 +1,93 @@
+version: 1.0
+
+# This is Orquesta workflow using YAQL
+description: Workflow that process datadog events
+
+input:
+  - responsebody
+  - slack_channel_critical
+  - slack_channel_normal
+
+tasks:
+  # poshmark_devops.parse_datadog_event takes response body (json)
+  parse_datadog_event:
+    action: poshmark_devops.parse_datadog_event
+    input:
+      responsebody: <% ctx().responsebody %>
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - env: <% result().result.env %>
+          - job: <% result().result.job %>
+          - service: <% result().result.service %>
+          - color: <% result().result.color %>
+          - host: <% result().result.host %>
+          - event_title: <% result().result.event_title %>
+          - aws_region: <% result().result.aws_region %>
+        do:
+          # This function will decide which job to run.
+          # Note: Stackstorm doesn't run a job from a variable. Ex: - <% ctx().job %>.
+          # So, create a job called run_job which will run next job using when.
+          - run_job
+  
+  # Decides which job to run next by using ctx().job
+  run_job:
+    next:
+      - when: <% ctx().job = message_slack %>
+        publish:
+          - message: <% ctx().event_title %>
+          - channel: <% ctx().slack_channel_critical %>
+        do:
+          - message_slack
+      - when: <% ctx().job = restart_service and ctx().service %>
+        do:
+          - restart_service
+      - when: <% ctx().job = log_app_port_failure and ctx().service %>
+        # Calling message_slack job until appropriate job is created.
+        publish:
+          - message: <% ctx().event_title %>
+          - channel: <% ctx().slack_channel_critical %>
+        do:
+          - message_slack
+      - when: <% ctx().job = restart_ec2_instance %>
+        do: 
+          - restart_ec2_instance
+  
+  restart_ec2_instance:
+    action: poshmark_devops.restart_ec2_instance
+    input:
+      aws_region: <% ctx().aws_region %>
+      host: <% ctx().host %>
+      event_title: <% ctx().event_title %>
+      slack_channel_critical: <% ctx().slack_channel_critical %>
+      slack_channel_normal: <% ctx().slack_channel_normal %>
+
+  message_slack:
+    action: chatops.post_message
+    input:
+      channel: <% ctx().channel %>
+      message: <% ctx().message %>
+      extra:
+        color: <% ctx().color %>
+
+  # Restarts a service. For now this task needs service name and hostname.
+  restart_service:
+    action: core.remote_sudo cmd="service <% ctx().service %> restart" hosts=<% ctx().host %> username="ubuntu" timeout=30
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - message: "successfully restarted service <% ctx().service %> on <% ctx().host %>"
+
+        do:
+           - message_slack
+      - when: <% failed() %>
+        publish:
+          - message: "Failed to restarted service <% ctx().service %> on <% ctx().host %>.\n<% result() %>"
+          - channel: <% ctx().slack_channel_critical %>
+        do:
+          - message_slack
+  #         - log_message
+  
+  # Need to create a log action. 
+  # log_message:
+  #   action: core.log message=<% ctx().message %>

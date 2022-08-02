@@ -1,0 +1,80 @@
+version: '1.0' #Version of the Job
+
+# This is Orquestra workflow using YAQL
+description: Basic workflow to show active hosts for the given environment and type.
+  
+input:
+  - env
+  - type
+  - user
+  
+tasks:
+  # Using lower case for qa and Camel case for reset
+  type_defined:
+    next:
+      - when: <% ctx().env = 'qa' %>
+        publish:
+          - tag_env: "tag:env"
+          - tag_type: "tag:type"
+          - app: "app"
+          - node: "node"
+        do:
+          - ec2_describe_instances
+      - when: <% ctx().env != 'qa' %>
+        publish:
+          - tag_env: "tag:Env"
+          - tag_type: "tag:Type"
+          - app: "App"
+          - node: "Node"
+        do:
+          - ec2_describe_instances
+  
+  ec2_describe_instances:
+    next:
+      - when: <% ctx().type = '*' %>
+        do:
+          - ec2_describe_instances_all
+      - when: <% ctx().type != '*' %>
+        do:
+          - ec2_describe_instances_type
+
+  ec2_describe_instances_all:
+    action: aws.ec2_describe_instances
+    input:
+      Filters: [{"Name":"instance-state-name", "Values":["running"]}, {"Name":"<% ctx().tag_env %>", "Values":["<% ctx().env %>"]}]
+    next:
+      - when: <% succeeded %>
+        publish:
+          - parameters: "{{ task('ec2_describe_instances_all').result.result[0]['Reservations'] }}"
+        do:
+          - process_active_hosts
+
+  ec2_describe_instances_type:
+    action: aws.ec2_describe_instances
+    input:
+      Filters: [{"Name":"instance-state-name", "Values":["running"]}, {"Name":"<% ctx().tag_env %>", "Values":["<% ctx().env %>"]}, {"Name":"<% ctx().tag_type %>", "Values":['{{ "App" if ctx().type == "Node" else ctx().type }}']}]
+    next:
+      - when: <% succeeded %>
+        publish:
+          - parameters: "{{ task('ec2_describe_instances_type').result.result[0]['Reservations'] }}"
+        do:
+          - process_active_hosts
+
+  process_active_hosts:
+    action: poshmark_devops.process_active_hosts
+    input:
+      instances: <% ctx().parameters %>
+      env_type: <% ctx().type %>
+    next:
+      - when: <% succeeded %>
+        publish:
+          - active_hosts: <% result().result %>
+        do:
+          - msg_slack
+
+  msg_slack:
+    action: chatops.post_message
+    input:
+      channel: <% ctx().user %>
+      message: "Active Hosts:\n{{ ctx().active_hosts|join('\\n') }}"
+      whisper: true

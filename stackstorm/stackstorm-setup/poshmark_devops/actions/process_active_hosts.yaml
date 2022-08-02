@@ -1,0 +1,15 @@
+name: process_active_hosts
+runner_type: python-script
+description: "Clean up result of ec2_describe_instances to only show active hosts."
+enabled: true
+entry_point: "process_active_hosts.py"
+pack: poshmark_devops
+parameters:
+  instances:
+    type: array
+    description: "Array of EC2 active instances"
+    required: true
+  env_type:
+    type: string
+    description: "Type of environment"
+    required: true

@@ -1,0 +1,43 @@
+version: '2.0'
+
+poshmark_devops.jenkins_monitor:
+  description: Process jenkins notification and making it human readable.
+  input:
+    - responsebody
+  tasks:
+    process_noti:
+      action: poshmark_devops.process_jenkins_noti
+      input:
+        responsebody: "{{ _.responsebody }}"
+      publish:
+        key: "{{ task('process_noti').result.result[2] }}"
+        color: "{{ task('process_noti').result.result[3] }}"
+      on-complete:
+        - check_key: "{{ _.key }}"
+        - msg_slack: "{{ not _.key }}"
+
+    check_key:
+      action: st2.kv.grep
+      input:
+        query: "{{ _.key }}"
+      on-success:
+        - get_user: "{{ task('check_key').result.result }}"
+        - msg_slack: "{{ not task('check_key').result.result }}"
+    get_user:
+      action: st2.kv.get
+      input:
+        key: "{{ _.key }}"
+      publish:
+        user: "{{ task('get_user').result.result[0] }}"
+      on-complete:
+        msg_slack
+
+    msg_slack:
+      action: chatops.post_message
+      input:
+        channel: "goshd-builds"
+        message: "{{ task('process_noti').result.result[0] }}\n\n{{ task('process_noti').result.result[1] }}"
+        user: "{{ _.user | default('here') }}"
+        extra:
+            color: "{{ _.color }}"
+

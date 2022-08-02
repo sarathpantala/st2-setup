@@ -1,0 +1,84 @@
+version: '2.0'
+
+poshmark_devops.datadog_monitor:
+  description: Process datadog alertfication and making it human readable.
+  input:
+    - responsebody
+  tasks:
+    process_event_id:
+      action: poshmark_devops.process_datadog_alert
+      input:
+        responsebody: "{{ _.responsebody }}"
+      publish:
+        job: "{{ task('process_event_id').result.result[0] }}"
+        color: "{{ task('process_event_id').result.result[1] }}"
+        event: "{{ task('process_event_id').result.result[2] }}"
+        monitor: "{{ task('process_event_id').result.result[3] }}"
+        alert_type: "{{ task('process_event_id').result.result[4] }}"
+        msg: "{{ task('process_event_id').result.result[5] }}"
+        host: "{{ task('process_event_id').result.result[6] }}"
+        extra: "{{ task('process_event_id').result.result[7] }}"
+        env: "{{ task('process_event_id').result.result[8] }}"
+        region: "{{ task('process_event_id').result.result[9] }}"
+      on-success:
+        - fix_mongo_con_spike: "{{ _.job == 'fix_mongo_con_spike' }}"
+        - restart_ec2_instance: "{{ _.job == 'restart_ec2_instance' }}"
+        - log_app_port_failure: "{{ _.job == 'log_app_port_failure' }}"
+        - report_disk_usage: "{{ _.job == 'report_disk_usage' }}"
+        - check_datadog_agent: "{{ _.job =='datadog_agent_failed' }}"
+        - high_system_cpu: "{{ _.job == 'high_system_cpu' }}"
+        - cleanup_mongo_conn_spike: "{{ _.job == 'cleanup_mongo_conn_spike' }}"
+        - msg_slack: "{{ _.job == 'msg_slack' }}"
+
+    fix_mongo_con_spike:
+      action: poshmark_devops.fix_mongo_connection_spike
+      input:
+        color: "{{ _.color }}"
+        schedule: "{{ _.extra }}"
+        env: "{{ _.env }}"
+
+    cleanup_mongo_conn_spike:
+      action: st2.kv.delete
+      input:
+        key: 'schedulerestart'
+      on-complete:
+        msg_slack
+
+    log_app_port_failure:
+      action: poshmark_devops.app_port_failure_check
+      input:
+        msg: "{{ _.msg }}"
+        host: "{{ _.host }}"
+
+    restart_ec2_instance:
+      action: poshmark_devops.fix_ec2_instance
+      input:
+        host: "{{ _.host }}"
+        region: "{{ _.region }}"
+        skip: "{{ _.extra }}"
+
+    check_datadog_agent:
+      action: poshmark_devops.check_datadog_agent
+      input:
+        color: "{{ _.color }}"
+        host: "{{ _.host }}"
+
+    report_disk_usage:
+      action: poshmark_devops.report_disk_usage
+      input:
+        color: "{{ _.color }}"
+        host: "{{ _.host }}"
+
+    high_system_cpu:
+      action: poshmark_devops.high_system_cpu
+      input:
+        color: "{{ _.color }}"
+        host: "{{ _.host }}"
+
+    msg_slack:
+      action: chatops.post_message
+      input:
+        channel: "poshbot_channel"
+        message: "{{ _.msg }}"
+        extra:
+          color: "{{ _.color }}"

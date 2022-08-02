@@ -1,0 +1,31 @@
+---
+name: "run_android_adhoc_deploy_job"
+pack: poshmark_devops
+description: "Kickoff appci run_android_adhoc_deploy_job job"
+enabled: true
+runner_type: "orquesta"
+entry_point: workflows/run_android_adhoc_deploy_job.yaml
+parameters:
+  job:
+    type: "string"
+    description: "Jenkins Job to run"
+    required: True
+    position: 0
+  branch_specifier:
+    type: "string"
+    description: "Branch name"
+    default: "None"
+    position: 1
+    required: True
+  flavour:
+    type: "string"
+    description: "Branch to be Deployed to Stage or QA"
+    default: "None"
+    position: 2
+    required: True
+  jenkins_pack_config_override:
+    type: "object"
+    description: "jenkins config with url, username, password (user api token)"
+    default: "{{config_context.appci_jenkins_config}}"
+    position: 3
+    required: False

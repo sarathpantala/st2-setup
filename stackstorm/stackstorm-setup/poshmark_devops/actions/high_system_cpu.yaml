@@ -1,0 +1,14 @@
+name: high_system_cpu
+runner_type: mistral-v2
+description: "Log High system cpu alert and attempt to fix if it doesn't resolve itself with in 15 mins"
+enabled: true
+entry_point: "workflows/high_system_cpu.yaml"
+parameters:
+  color:
+    type: string
+    description: "Slack Message color"
+    required: true
+  host:
+    type: string
+    description: "Host that's alerting"
+    required: true

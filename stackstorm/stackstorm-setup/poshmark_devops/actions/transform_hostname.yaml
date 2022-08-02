@@ -1,0 +1,11 @@
+name: transform_hostname
+runner_type: python-script
+description: "Clean up hostname by appending tag_Name_ to hostname and replace dash(-) with underscore(_)"
+enabled: true
+entry_point: "transform_hostname.py"
+pack: poshmark_devops
+parameters:
+  hostname:
+    type: string
+    description: "Hostname for Jenkins to update"
+    required: true

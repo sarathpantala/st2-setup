@@ -1,0 +1,10 @@
+# packs/poshmark_devops/aliases/run_jenkins_deploy.yaml
+---
+name: "run_jenkins_deploy"
+action_ref: "poshmark_devops.run_jenkins_job"
+description: "Launch jenkins deploy jobs on goshd."
+pack: poshmark_devops
+formats:
+  - "deploy {{buildenv}} {{job=deploy}} {{branch=None}} {{params=None}}"
+ack:
+    enabled: false

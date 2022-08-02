@@ -1,0 +1,16 @@
+---
+- name: Install 3rd party packs
+  import_tasks: install_3rdparty_packs.yml
+  tags: install_st2_3rdparty_packs, configure_st2
+
+- name: Configure 3rd party packs
+  import_tasks: configure_3rdparty_packs.yml
+  tags: configure_3rdparty_packs, install_st2_3rdparty_packs, configure_st2
+
+- name: Configure chatops st2chatops.env
+  import_tasks: config_chatops.yml
+  tags: config_chatops, configure_st2
+
+- name: Install 3rd party hubot scripts
+  import_tasks: install_3rdparty_hubot_scripts.yml
+  tags: install_3rdparty_hubot_scripts, configure_st2

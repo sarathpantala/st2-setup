@@ -1,0 +1,5 @@
+*.log
+*.retry
+*.vagrant/*
+secrets_pass.txt
+*.pyc

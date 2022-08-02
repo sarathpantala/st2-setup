@@ -1,0 +1,5 @@
+# Changes to this file is managed by ANSIBLE. Please don't make manual changes.
+---
+api_key: {{ lookup('aws_ssm', '/pagerduty/api_key', region=aws_ssm_region ) | default('could not access aws ssm parameter') }}
+service_key: {{ lookup('aws_ssm', '/pagerduty/service_key', region=aws_ssm_region ) | default('could not access aws ssm parameter') }}
+debug: {{ pagerduty.debug }}

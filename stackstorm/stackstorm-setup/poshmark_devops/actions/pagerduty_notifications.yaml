@@ -1,0 +1,17 @@
+name: pagerduty_notifications
+runner_type: orquesta
+description: Pulls incident notifications for the last 12 hours for the specified team."
+enabled: true
+entry_point: workflows/pagerduty_notifications.yaml
+pack: poshmark_devops
+parameters:
+    team:
+        type: string
+        default: "DevOps"
+        description: "Team whose Notifications are to be Displayed"
+        required: false
+    user:
+        type: string
+        default: "on-call-activities"
+        description: "Channel Name"
+        required: false

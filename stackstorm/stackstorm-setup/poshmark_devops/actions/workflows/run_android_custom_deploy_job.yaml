@@ -1,0 +1,18 @@
+version: 1.0
+
+# This is Orquesta workflow using YAQL
+description: Basic workflow to construct parameters to for jenkins.build_job action in a JSON format
+
+input:
+  - job
+  - branch_specifier
+  - flavour
+  - jenkins_pack_config_override
+
+tasks:
+  run_build_job:
+    action: jenkins.build_job
+    input:
+      project: <% ctx().job %>
+      parameters: <% dict(branch_specifier=>ctx().branch_specifier,flavour=>ctx().flavour) %>
+      config_override: <% ctx().jenkins_pack_config_override %>

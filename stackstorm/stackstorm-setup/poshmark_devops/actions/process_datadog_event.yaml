@@ -1,0 +1,23 @@
+---
+name: "process_datadog_event"
+pack: "poshmark_devops"
+description: "Rule that run workflow process_datadog_event to process events from datadog."
+enabled: true
+runner_type: "orquesta"
+entry_point: "workflows/process_datadog_event.yaml"
+parameters:
+  responsebody:
+    type: "object"
+    description: "Response body of datadog event."
+    required: true
+  slack_channel_critical:
+    type: "string"
+    description: "slack channel for critical notifications: #prod-critical-alerts"
+    required: false
+    default: "{{config_context.ops_critical_alert_channel}}"
+  slack_channel_normal:
+    type: "string"
+    description: "slack channel for normal notifications: #production-alerts"
+    required: false
+    default: "{{config_context.ops_normal_alert_channel}}"
+    

@@ -1,0 +1,73 @@
+---
+- name: configure_st2_conf | Adding ansible header
+  become: yes
+  lineinfile:
+    path: "{{ st2_conf_file }}"
+    insertbefore: BOF
+    line: "# Changes to this file are managed by ANSIBLE. Please don't make manual changes."
+    
+- name: configure_st2_conf | Adding allow_origin in [api]
+  become: yes
+  lineinfile:
+    path: "{{ st2_conf_file }}"
+    insertafter: "^# allow_origin = http"
+    line: allow_origin = *
+
+- name: configure_st2_conf | Adding garbagecollector variables in [garbagecollector]
+  become: yes
+  blockinfile:
+    dest: "{{ st2_conf_file }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - garbagecollector"
+    insertafter: '\[garbagecollector\]'
+    block: |
+      action_executions_ttl = 7
+      action_executions_output_ttl = 7
+      trigger_instances_ttl = 7
+
+
+- name: configure_st2_conf | Ensure use_ssl = True in [auth]
+  become: yes
+  ini_file:
+    path: "{{ st2_conf_file }}"
+    section: auth
+    option: use_ssl
+    value: True
+    backup: yes
+
+- name: configure_st2_conf | Ensure debug = True in [auth]
+  become: yes
+  ini_file:
+    path: "{{ st2_conf_file }}"
+    section: auth
+    option: debug
+    value: True
+    backup: yes
+
+- name: configure_st2_conf | Adding cert and key in [auth]
+  become: yes
+  blockinfile:
+    dest: "{{ st2_conf_file }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - auth"
+    insertafter: '\[auth\]'
+    block: |
+      cert = /etc/ssl/st2/st2.crt
+      key = /etc/ssl/st2/st2.key
+
+- name: configure_st2_conf | Adding var's in [webui]
+  become: yes
+  blockinfile:
+    dest: "{{ st2_conf_file }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - webui"
+    insertafter: '\[webui\]'
+    block: |
+      webui_base_url = {{ st2_webui_base_url }}
+
+# Disabling use_paramiko_ssh_runner which is causing ssh issues (not detecting ssh key).
+- name: configure_st2_conf | Adding var's in [ssh_runner]
+  become: yes
+  blockinfile:
+    dest: "{{ st2_conf_file }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - ssh_runner"
+    insertafter: '\[ssh_runner\]'
+    block: |
+      use_paramiko_ssh_runner = False

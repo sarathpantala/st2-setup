@@ -1,0 +1,33 @@
+---
+# vars file for posh.st2_deploy
+# Use varabiles here which are independed of environment. ex: dev, stage, production.
+st2_auth_password: admin
+st2_auth_username: admin
+st2_3rdparty_packs:
+  - jenkins
+jenkins:
+  url: http://3.237.171.132:8080/
+stackstorm_root: /opt/stackstorm
+stackstorm_configs: "{{ stackstorm_root }}/configs"
+chatops_dir: "{{ stackstorm_root }}/chatops"
+st2_conf_file: /etc/st2/st2.conf
+st2_webui_base_url: https://marvin.poshcrew.com
+st2_auth_cert: /etc/ssl/st2/st2.crt
+st2_auth_key: /etc/ssl/st2/st2.key
+hubot_name: jarvis
+hubot_slack_exit_on_disconnect: 1
+poshmark_devops:
+  ops_critical_alert_channel: "automation-team"
+  ops_normal_alert_channel: "automation-team"
+hubot_slack_token: xoxb-3831804017712-3810465671652-iZmY1D74iB7Ypmjia12ALudp
+helper_slack_token: xoxb-3831804017712-3810465671652-iZmY1D74iB7Ypmjia12ALudp
+st2_services:
+  - st2actionrunner
+  - st2garbagecollector
+  - st2notifier
+  - st2resultstracker
+  - st2rulesengine
+  - st2sensorcontainer
+  - st2api
+  - st2stream
+  - st2auth

@@ -1,0 +1,41 @@
+---
+name: "run_jenkins_job"
+pack: poshmark_devops
+description: "Kickoff Jenkins Jobs"
+enabled: true
+runner_type: "orquesta"
+entry_point: workflows/run_jenkins_job.yaml
+parameters:
+  skip_notify:
+    default:
+      - "prepare_build_job"
+      - "run_build_job"
+      - "run_jenkins_job"
+  job:
+    type: "string"
+    description: "Jenkins Job to run"
+    required: True
+    position: 0
+  buildenv:
+    type: "string"
+    description: "Env on which to run job"
+    required: True
+    position: 1
+  branch:
+    type: "string"
+    description: "Branch to be Deployed to Staging or QA"
+    default: "None"
+    position: 2
+    required: True
+  params:
+    type: "string"
+    description: "Additional parameters to be passed to Jenkins job"
+    default: "None"
+    position: 3
+    required: True
+
+notify:
+  on-complete:
+    message: "\"@channel: Action succeeded.\""
+    routes:
+      - "slack"

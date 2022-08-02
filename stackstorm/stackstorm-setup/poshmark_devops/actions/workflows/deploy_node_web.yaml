@@ -1,0 +1,16 @@
+version: 1.0
+
+# This is Orquesta workflow using YAQL
+description: Basic workflow to construct parameters to for jenkins.build_job action in a JSON format
+
+input:
+  - job
+  - pm_style_branch
+  
+tasks:
+  run_build_job:
+    action: jenkins.build_job
+    input:
+      project: <% ctx().job %>
+      parameters: <% dict(pm_style_branch=>ctx().pm_style_branch) %>
+

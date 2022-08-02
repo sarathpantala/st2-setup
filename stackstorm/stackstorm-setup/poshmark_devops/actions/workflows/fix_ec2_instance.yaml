@@ -1,0 +1,136 @@
+version: '2.0'
+
+poshmark_devops.fix_ec2_instance:
+  description: Check that status of the ec2 instance, restart if necessary and create a support ticket
+  input:
+    - host
+    - skip
+    - region
+  tasks:
+    get_instance_id:
+      action: aws.ec2_get_only_instances
+      input:
+        filters: "{\"tag:Name\": \"{{ _.host }}\" }"
+      publish:
+        instance: "{{ task('get_instance_id').result.result[0]['id'] }}"
+      on-success:
+        - page_redis: "{{ _.skip == 'true' }}"
+        - get_volume_id: "{{ _.skip == 'false' }}"
+
+    get_volume_id:
+      action: core.local
+      input:
+        cmd: "aws ec2 describe-instances --region {{ _.region }} --filters 'Name=tag:Name,Values={{ _.host }}' --output text --query 'Reservations[*].Instances[*].BlockDeviceMappings[*].Ebs.VolumeId'"
+      publish:
+        volume: "{{ task('get_volume_id').result.stdout }}"
+        attempt: "1"
+      on-success:
+        - page_redis: "{{ _.skip == 'true' }}"
+        - check_system_status: "{{ _.skip == 'false' }}"
+
+    check_system_status:
+      action: core.local
+      input:
+        cmd: "aws ec2 describe-instance-status --region {{ _.region }} --instance-ids={{ _.instance }} --query 'InstanceStatuses[*].SystemStatus.Status' --output text"
+      publish:
+        system_status: "{{ task('check_system_status').result.stdout }}"
+      on-success:
+        - msg_slack_start: "{{ _.system_status == 'impaired' and _.attempt == '2' }}"
+        - check_instance_status: "{{ _.attempt == '1' or _.attempt == '2' }}"
+
+    check_instance_status:
+      action: core.local
+      input:
+        cmd: "aws ec2 describe-instance-status --region {{ _.region }} --instance-ids={{ _.instance }} --query 'InstanceStatuses[*].InstanceStatus.Status' --output text"
+      publish:
+        instance_status: "{{ task('check_instance_status').result.stdout }}"
+      on-success:
+        - msg_slack_start: "{{ (_.system_status == 'impaired' or _.instance_status == 'impaired') and _.attempt == '2' }}"
+        - wait_5_mins: "{{ (_.system_status == 'impaired' or _.instance_status == 'impaired') and _.attempt == '1' }}"
+        - msg_slack_finish: "{{ _.system_status != 'impaired' and _.instance_status != 'impaired' }}"
+
+    wait_5_mins:
+      wait-before: 120
+      publish:
+        attempt: '2'
+      on-success:
+        check_system_status
+
+    msg_slack_start:
+      action: chatops.post_message
+      input:
+        channel: "poshbot_channel"
+        message: "Restarting {{ _.host }}"
+        extra:
+          color: "warning"
+      on-success:
+        stop_ec2_instance
+
+    stop_ec2_instance:
+      action: core.local
+      input:
+        cmd: "aws ec2 stop-instances --region {{ _.region }} --instance-ids {{ _.instance }}"
+      publish:
+        ec2_status: "stopped"
+      on-success:
+        wait_for_instance
+
+    start_ec2_instance:
+      action: core.local
+      input:
+        cmd: "aws ec2 start-instances --region {{ _.region }} --instance-ids {{ _.instance }}"
+      publish:
+        ec2_status: "running"
+      on-success:
+        wait_for_instance
+
+    wait_for_instance:
+      action: aws.ec2_wait_for_state
+      input:
+        instance_id: "{{ _.instance }}"
+        state: "{{ _.ec2_status }}"
+      on-error:
+        msg_slack_failure
+      on-complete:
+        - start_ec2_instance: "{{ _.ec2_status == 'stopped' }}"
+        - msg_slack_finish: "{{ _.ec2_status == 'running' }}"
+
+    create_aws_case:
+      action: aws.support_create_case
+      input:
+        ccEmailAddresses: "sysops@poshmark.com"
+        language: "en"
+        communicationBody: "Was there any issue with instance {{ _.instance }} and ebs volume: {{ _.volume }} that would have caused the status checks to fail?"
+        subject: "Status Check failed on instance: {{ _.instance }}"
+
+    msg_slack_finish:
+      action: chatops.post_message
+      input:
+        channel: "poshbot_channel"
+        message: "{{ _.host }} ec2 instance has been successfully restarted.\n\nCreating a new aws support case."
+        extra:
+          color: "good"
+      publish:
+        create_case: "true"
+      on-success:
+        unmute_host
+
+    msg_slack_failure:
+      action: chatops.post_message
+      input:
+        channel: "poshbot_channel"
+        message: "{{ _.host }} ec2 instance failed to restart.\n\nError while attempting to restart instnace.\n\n Please check the aws console."
+        extra:
+          color: "warning"
+
+    unmute_host:
+      action: datadog.unmute_host
+      input:
+        host: "{{ _.host }}"
+      on-complete:
+        - create_aws_case: "{{ _.create_case == 'true' }}"
+
+    page_redis:
+      action: pagerduty.launch_incident
+      input:
+        description: "Non App or Queue Worker EC2 Instance status check failed {{ _.host }}."

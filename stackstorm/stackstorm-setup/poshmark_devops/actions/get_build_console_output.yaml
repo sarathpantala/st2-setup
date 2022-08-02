@@ -1,0 +1,14 @@
+name: "get_build_console_output"
+runner_type: python-script
+description: "Get console output from build"
+enabled: true
+entry_point: "get_build_console_output.py"
+parameters:
+    job:
+        type: string
+        description: "Job name"
+        required: true
+    number:
+        type: string
+        description: "Build number to get output from"
+        required: true

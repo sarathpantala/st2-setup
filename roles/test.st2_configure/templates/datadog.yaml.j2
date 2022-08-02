@@ -1,0 +1,4 @@
+# Changes to this file is managed by ANSIBLE. Please don't make manual changes.
+---
+app_key: '{{ lookup('aws_ssm', '/datadog/app_key', region=aws_ssm_region ) | default('could not access aws ssm parameter') }}'
+api_key: '{{ lookup('aws_ssm', '/datadog/api_key', region=aws_ssm_region ) | default('could not access aws ssm parameter') }}'

@@ -1,0 +1,15 @@
+name: transfer_host_log
+runner_type: orquesta
+description: Basic workflow to run the DevOps jenkins job to transfer a log file.
+enabled: true
+entry_point: workflows/transfer_host_log.yaml
+pack: poshmark_devops
+parameters:
+    host_name:
+        type: string
+        description: "Hostname that the log file is on"
+        required: true
+    log_name:
+        type: string
+        description: "Name of the log file"
+        required: true

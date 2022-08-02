@@ -1,0 +1,6 @@
+name: process_pagerduty_oncall
+runner_type: python-script
+description: "Clean up result of API call to get pagerduty oncall personel for devops, platform, and web teams."
+enabled: true
+entry_point: "process_pagerduty_oncall.py"
+pack: poshmark_devops

@@ -1,0 +1,11 @@
+name: get_pagerduty_oncall
+runner_type: orquesta
+description: Shows current on call personel for devops, platform, and web.
+enabled: true
+entry_point: workflows/get_pagerduty_oncall.yaml
+pack: poshmark_devops
+parameters:
+    user:
+        type: string
+        description: "User Name"
+        required: true

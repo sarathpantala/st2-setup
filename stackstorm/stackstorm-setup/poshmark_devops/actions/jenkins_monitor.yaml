@@ -1,0 +1,10 @@
+name: jenkins_monitor
+runner_type: mistral-v2
+description: "Process Jenkins Notification"
+enabled: true
+entry_point: "workflows/process_jenkins_noti.yaml"
+parameters:
+    responsebody:
+        type: object
+        description: "Body of trigger from Jenkins"
+        required: true

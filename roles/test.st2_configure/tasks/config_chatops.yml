@@ -1,0 +1,29 @@
+---
+- name: config_chatops | Adding HUBOT_NAME
+  become: yes
+  lineinfile:
+    path: "{{ chatops_dir }}/st2chatops.env"
+    regexp: '^export HUBOT_NAME='
+    line: 'export HUBOT_NAME={{ hubot_name }}'
+
+- name: config_chatops | Adding slack variables
+  become: yes
+  blockinfile:
+    dest: "{{ chatops_dir }}/st2chatops.env"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - SLACK"
+    insertafter: '^# Slack settings'
+    block: |
+      export HUBOT_ADAPTER=slack
+      export HUBOT_SLACK_TOKEN={{ hubot_slack_token }}
+      export HUBOT_SLACK_EXIT_ON_DISCONNECT={{ hubot_slack_exit_on_disconnect }}
+      export HELPER_SLACK_TOKEN={{ helper_slack_token }}
+
+- name: config_chatops | Comment HUBOT_ADAPTER=shell
+  become: yes
+  lineinfile:
+    path: "{{ chatops_dir }}/st2chatops.env"
+    regexp: '^export HUBOT_ADAPTER=shell'
+    line: '# export HUBOT_ADAPTER=shell'
+    backrefs: yes
+
+# Generate and add ST2_API_KEY.

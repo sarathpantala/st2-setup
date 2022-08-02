@@ -1,0 +1,15 @@
+---
+  name: "datadog_alerts"
+  pack: "poshmark_devops"
+  description: "Listen for webhook from Datadog with alerts"
+  enabled: true
+
+  trigger:
+    type: "core.st2.webhook"
+    parameters:
+      url: "datadog"
+
+  action:
+    ref: "poshmark_devops.datadog_monitor"
+    parameters:
+      responsebody: "{{ trigger.body }}"

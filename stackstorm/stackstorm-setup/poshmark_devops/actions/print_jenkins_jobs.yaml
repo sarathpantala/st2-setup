@@ -1,0 +1,11 @@
+---
+description: List Availabe Jenkins jobs
+enabled: true
+runner_type: local-shell-cmd
+entry_point: ''
+name: list_jenkins_jobs
+pack: poshmark_devops
+parameters:
+  cmd: 
+    immutable: true
+    default: "echo Availble Jenkins Jobs: qa-restart qa-deploy stage-restart stage-deploy"

@@ -1,0 +1,149 @@
+version: 1.0
+
+# This is Orquesta workflow using YAQL
+description: Workflow that process request for restart of EC2 instance
+
+input:
+  - aws_region
+  - host
+  - event_title
+  - slack_channel_critical
+  - slack_channel_normal
+
+tasks:
+  # Check if stackstorm is authorized to restart an aws instance.  
+  am_i_authorized: 
+    action: poshmark_devops.check_ec2_restart_authorization
+    input: 
+      host: <% ctx().host %>
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - restart: <% result().result.restart %>
+        do:
+          - process_ec2_authorization_result
+      - when: <% failed() %> 
+        publish:
+          - message: "Unable to process restart of <% ctx().host %>.\n
+          Event: <% ctx().event %>\nStackstorm execution ID: <% ctx(st2).action_execution_id %>
+          \nPlease process this alert."
+          - channel: <% ctx().slack_channel_critical %>
+          - color: "danger"
+        do:
+          - message_slack
+    
+  process_ec2_authorization_result:
+    next:
+      - when: <% ctx().restart = 'false' %>
+        publish:
+          - message: "Stackstorm is not authorized to restart of <% ctx().host %>.\n
+          Event: <% ctx().event %>\nStackstorm execution ID: <% ctx(st2).action_execution_id %>\n
+          Please process this alert."
+          - channel: <% ctx().slack_channel_critical %>
+          - color: "danger"
+        do:
+          - message_slack
+      - when: <% ctx().restart = 'true' %>
+        do:
+          - get_instance_id_from_name
+  
+  get_instance_id_from_name:
+    action: aws.ec2_get_only_instances
+    input:
+      # Escaping "
+      filters: "{\"tag:Name\": \"<% ctx().host %>\"}"
+    next:
+      - when: <% succeeded() %>
+        publish:
+          - instance_id: <% result().result[0].get(id) %>
+          - instance_status: <% result().result[0].get(state) %>
+        do:
+          - check_ec2_instance_status
+      - when: <% failed() %>
+        publish: 
+          - message: "stackstorm workflow failed at step get_instance_id_from_name for <% ctx().host %>.\n
+          Event: <% ctx().event %>\nStackstorm execution ID: <% ctx(st2).action_execution_id %>\n
+          Please process this alert."
+          - channel: <% ctx().slack_channel_critical %>
+          - color: "danger"
+        do:
+          - message_slack
+  
+  check_ec2_instance_status:
+    next:
+      - when: <% ctx().instance_status = "running" %>
+        publish: 
+          - message: "<% ctx().host %> is running. No action necessary."
+          - channel: <% ctx().slack_channel_critical %>
+          - color: "warning"
+        do:
+          - message_slack
+      - when: <% ctx().instance_status = "stopped" %>
+        do:
+          - ec2_start_instance
+      - when: <% ctx().instance_status = "pending" %>
+        publish:
+          - sleep_time_secs: 30
+          - message: "Wait for the instance <% ctx().host %> to go to RUNNING state"
+          - channel: <% ctx().slack_channel_normal %>
+          - color: "warning"
+        do:
+          - check_ec2_instance_status_delay
+          - message_slack
+      - when: <% ctx().instance_status = "stopping" %>
+        publish:
+          - sleep_time_secs: 30
+          - message: "Wait for the instance <% ctx().host %> to go to STOPPED state.\n
+          Then stackstorm will start this instance.\nEvent: <% ctx().event %>\n
+          Stackstorm execution ID: <% ctx(st2).action_execution_id %>"
+          - channel: <% ctx().slack_channel_normal %>
+          - color: "warning"
+        do:
+          - check_ec2_instance_status_delay
+          - message_slack
+      - when: <% ctx().instance_status = "shutting-down" or ctx().instance_status = "terminated" %>
+        publish:
+          - message: "The instance <% ctx().host %> is in shutting-down or terminated state.\n
+           Stackstorm is not authrized to bringup this instance.\nEvent: <% ctx().event %>\n
+           Stackstorm execution ID: <% ctx(st2).action_execution_id %>"
+          - channel: <% ctx().slack_channel_critical %>
+          - color: "warning"
+        do:
+          - message_slack
+    
+    check_ec2_instance_status_delay:
+      delay: <% ctx().sleep_time_secs >
+      next:
+        - when: <% succeeded() %>
+          do:
+            - get_instance_id_from_name
+  
+  ec2_start_instance:
+    action: aws.ec2_start_instances
+    input:
+      InstanceIds: [<% ctx().instance_id %>]
+    next: 
+      - when: <% succeeded() %>
+        publish: 
+          - HTTPStatusCode: <% result().result[0]['ResponseMetadata'].get(HTTPStatusCode) %>
+          - message: "<% ctx().host %> start result: <% ctx().HTTPStatusCode %>"
+          - channel: <% ctx().slack_channel_critical %>
+          - color: "good"
+        do:
+          - message_slack
+      - when: <% failed() %>
+        publish: 
+          - message: "<% ctx().host %> start failed. Please start this instance manually.\n 
+          Event: <% ctx().event %>\nStackstorm execution ID: <% ctx(st2).action_execution_id %>"
+          - channel: <% ctx().slack_channel_critical %>
+          - color: "danger"
+        do:
+          - message_slack
+    
+  message_slack:
+    action: chatops.post_message
+    input:
+      channel: <% ctx().channel %>
+      message: <% ctx().message %>
+      extra:
+        color: <% ctx().color %>
