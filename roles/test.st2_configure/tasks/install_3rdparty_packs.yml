@@ -11,20 +11,19 @@
 - name: install_3rdparty_packs | Installing 3rd party packs
   shell: ST2_AUTH_TOKEN=`st2 auth -t -p {{ st2_auth_password }} {{ st2_auth_username }}` st2 pack install --force {{ item }}
   loop: "{{ st2_3rdparty_packs }}"
+# - name: install_3rdparty_packs | Checking if action.py is present in aws pack
+#   stat:
+#     path: "{{ stackstorm_root }}/packs/aws/actions/lib/action.py"
+#   register: aws_pack_action_py
 
-- name: install_3rdparty_packs | Checking if action.py is present in aws pack
-  stat:
-    path: "{{ stackstorm_root }}/packs/aws/actions/lib/action.py"
-  register: aws_pack_action_py
-
-- name: install_3rdparty_packs | Make action.py support python 3 - Replace kwargs.items() with list(kwargs.items())
-  become: yes
-  replace:
-    path: "{{ stackstorm_root }}/packs/aws/actions/lib/action.py"
-    regexp: ' kwargs.items\(\)'
-    replace: ' list(kwargs.items())'
-  when:
-    - aws_pack_action_py.stat.exists
+# - name: install_3rdparty_packs | Make action.py support python 3 - Replace kwargs.items() with list(kwargs.items())
+#   become: yes
+#   replace:
+#     path: "{{ stackstorm_root }}/packs/aws/actions/lib/action.py"
+#     regexp: ' kwargs.items\(\)'
+#     replace: ' list(kwargs.items())'
+#   when:
+#     - aws_pack_action_py.stat.exists
   notify: 
     - reload register-configs
     - restart st2

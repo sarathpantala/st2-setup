@@ -50,15 +50,6 @@
   tags:
     - smoke-tests
 
-- name: Verify if st2 pack was installed
-  environment:
-    ST2_AUTH_TOKEN: "{{ st2_token.stdout }}"
-  command: st2 pack get st2
-  changed_when: no
-  check_mode: no
-  tags:
-    - smoke-tests
-
 - name: Verify st2chatops
   import_tasks: st2chatops.yml
   # st2chatops is installed
@@ -67,9 +58,3 @@
     - smoke-tests
     - st2chatops
 
-- name: Run RBAC tests to verify the setup
-  import_tasks: st2rbac_verification.yml
-  when: st2_rbac_enable|bool
-  tags:
-    - smoke-tests
-    - rbac-tests

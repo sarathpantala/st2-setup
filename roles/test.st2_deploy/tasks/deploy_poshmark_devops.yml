@@ -32,7 +32,7 @@
 
 - name: deploy_poshmark_devops | Install poshmark_devops pack
   become: yes
-  shell: ST2_AUTH_TOKEN=`st2 auth -t -p {{ st2_auth_password }} {{ st2_auth_username }}` st2 pack install --python3 file://{{ stackstorm_root }}/poshmark_devops
+  shell: ST2_AUTH_TOKEN=`st2 auth -t -p {{ st2_auth_password }} {{ st2_auth_username }}` st2 pack install file://{{ stackstorm_root }}/poshmark_devops
   notify:
     - remove poshmark_devops_temp_dir
 

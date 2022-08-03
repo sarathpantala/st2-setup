@@ -16,6 +16,6 @@
     - StackStorm.st2web
     - StackStorm.nodejs
     - StackStorm.st2chatops
-    - StackStorm.st2smoketests
+      #    - StackStorm.st2smoketests
     - test.st2_configure
     - test.st2_deploy
